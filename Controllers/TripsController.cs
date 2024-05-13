@@ -24,8 +24,8 @@ namespace Zadanie7.Controllers
         [HttpPost("{idTrip}/clients")]
         public async Task<IActionResult> AddClientToTrip([FromRoute] int idTrip, [FromBody] AddClientToTripDTO dto)
         {
-
-            return Ok(dto);
+            var result = await _repository.AddClientToTripAsync(idTrip, dto);
+            return Ok(result);
         }
     }
 }

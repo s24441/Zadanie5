@@ -14,7 +14,7 @@ namespace Zadanie7.Repositories
 
         public async Task DeleteClientAsync(int clientId)
         {
-            var client = await _context.Clients.FirstOrDefaultAsync(client => client.IdClient == clientId);
+            var client = await _context.Clients.Include(client => client.ClientTrips).FirstOrDefaultAsync(client => client.IdClient == clientId);
             if (client == null) 
                 throw new Exception($"The given id {clientId} doesn't corespond to any client");
 

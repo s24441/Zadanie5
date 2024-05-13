@@ -40,10 +40,15 @@ namespace Zadanie7.Repositories
 
         public async Task<AddClientToTripDTO> AddClientToTripAsync(int idTrip, AddClientToTripDTO dto)
         {
-            var clientExists = _context.Clients.Any(client => client.Pesel == dto.Pesel);
+            var tripExists = await _context.Trips.AnyAsync(trip => trip.IdTrip == idTrip);
+            if (!tripExists)
+                throw new Exception($"The given trip id {idTrip} doesn't corespond to any trip");
+
+            var clientExists = await _context.Clients.AnyAsync(client => client.Pesel == dto.Pesel);
             if (!clientExists) 
             {
-                var cl = new Client() { 
+                var cl = new Client() {
+                    IdClient = (await _context.Clients.MaxAsync(client => client.IdClient)) + 1,
                     FirstName = dto.FirstName, 
                     LastName = dto.LastName, 
                     Pesel = dto.Pesel, 
@@ -55,10 +60,24 @@ namespace Zadanie7.Repositories
                 await _context.SaveChangesAsync();
             }
 
-            var client = await _context.Clients.FirstOrDefaultAsync(client => client.Pesel == dto.Pesel);
+            var client = await _context.Clients.Include(client => client.ClientTrips).FirstOrDefaultAsync(client => client.Pesel == dto.Pesel);
             if (client!.ClientTrips.Any(trip => trip.IdTrip == idTrip))
                 throw new Exception($"Client already signed on trip with id {idTrip}");
 
+            var clientTrip = new ClientTrip()
+            {
+                IdClient = client.IdClient,
+                IdTrip = idTrip,
+                PaymentDate = dto.PaymentDate,
+                RegisteredAt = DateTime.Now
+
+            };
+
+            _context.ClientTrips.Add(clientTrip);
+
+            await _context.SaveChangesAsync();
+
+            return dto;
         }
     }
 }
